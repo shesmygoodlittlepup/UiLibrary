@@ -1447,11 +1447,12 @@ do
 			Elements = {},
 			Content = {},
 			Sections = {},
+			ScrollHeight = Properties.ScrollHeight or 380, -- NEW: default scroll height
+			Scrolling = Properties.Scrolling ~= false, -- NEW: enable scrolling by default
 		}
 		--
 		local SectionOutline = Instance.new("Frame")
 		SectionOutline.Name = "SectionOutline"
-		SectionOutline.AutomaticSize = Enum.AutomaticSize.Y
 		SectionOutline.BackgroundColor3 = Color3.fromRGB(17,17,17)
 		SectionOutline.BorderColor3 = Color3.fromRGB(0, 0, 0)
 		SectionOutline.Size = UDim2.new(1, 0, 0, 20)
@@ -1505,15 +1506,27 @@ do
 		Title.Size = UDim2.new(0, 200, 0, 20)
 		Title.Parent = SectionInline
 
-		local SectionContent = Instance.new("Frame")
+		-- NEW: Scrolling Section Content
+		local SectionContentContainer = Instance.new("Frame")
+		SectionContentContainer.Name = "SectionContentContainer"
+		SectionContentContainer.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+		SectionContentContainer.BackgroundTransparency = 1
+		SectionContentContainer.Position = UDim2.new(0, 4, 0, 25)
+		SectionContentContainer.Size = UDim2.new(1, -8, 0, Section.ScrollHeight)
+		SectionContentContainer.ClipsDescendants = true
+		SectionContentContainer.Parent = SectionInline
+
+		local SectionContent = Instance.new("ScrollingFrame")
 		SectionContent.Name = "SectionContent"
-		SectionContent.AutomaticSize = Enum.AutomaticSize.Y
 		SectionContent.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 		SectionContent.BackgroundTransparency = 1
-		SectionContent.BorderColor3 = Color3.fromRGB(0, 0, 0)
 		SectionContent.BorderSizePixel = 0
-		SectionContent.Position = UDim2.new(0, 4, 0, 25)
-		SectionContent.Size = UDim2.new(1, -8, 0, 0)
+		SectionContent.Size = UDim2.new(1, 0, 1, 0)
+		SectionContent.ScrollBarThickness = 4
+		SectionContent.ScrollBarImageColor3 = Library.Accent
+		SectionContent.CanvasSize = UDim2.new(0, 0, 0, 0)
+		SectionContent.AutomaticCanvasSize = Enum.AutomaticSize.Y
+		SectionContent.Parent = SectionContentContainer
 
 		local UIListLayout = Instance.new("UIListLayout")
 		UIListLayout.Name = "UIListLayout"
@@ -1526,12 +1539,10 @@ do
 		UIPadding.PaddingBottom = UDim.new(0, 6)
 		UIPadding.Parent = SectionContent
 
-		SectionContent.Parent = SectionInline
-		SectionInline.Parent = SectionOutline
-
-		-- // Elements
+		-- Store original SectionContent for element creation
 		Section.Elements = {
-			SectionContent = SectionContent;
+			SectionContent = SectionContent,
+			SectionContainer = SectionContentContainer,
 		}
 
 		-- // Returning
@@ -3366,462 +3377,454 @@ do
 		return Keybind
 	end
 	--
-	function Sections:Textbox(Properties)
-		local Properties = Properties or {}
-		local Textbox = {
-			Window = self.Window,
-			Page = self.Page,
-			Section = self,
-			Name = (Properties.Name or Properties.name or nil),
-			Placeholder = (
-				Properties.placeholder
-					or Properties.Placeholder
-					or Properties.holder
-					or Properties.Holder
-					or ""
-			),
-			State = (
-				Properties.state
-					or Properties.State
-					or Properties.def
-					or Properties.Def
-					or Properties.default
-					or Properties.Default
-					or ""
-			),
-			Callback = (
-				Properties.callback
-					or Properties.Callback
-					or Properties.callBack
-					or Properties.CallBack
-					or function() end
-			),
-			Flag = (
-				Properties.flag
-					or Properties.Flag
-					or Properties.pointer
-					or Properties.Pointer
-					or Library.NextFlag()
-			),
-		}
-		--
-		local NewBox = Instance.new("TextButton")
-		NewBox.Name = "NewBox"
-		NewBox.FontFace = Library.Fonts.Types.Smallest_Pixel
-		NewBox.Text = ""
-		NewBox.TextColor3 = Color3.fromRGB(0, 0, 0)
-		NewBox.TextSize = Library.FSize
-		NewBox.AutoButtonColor = false
-		NewBox.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-		NewBox.BackgroundTransparency = 1
-		NewBox.BorderColor3 = Color3.fromRGB(0, 0, 0)
-		NewBox.BorderSizePixel = 0
-		NewBox.Size = UDim2.new(1, 0, 0, Textbox.Name ~= nil and 30 or 16)
-		NewBox.Parent = Textbox.Section.Elements.SectionContent
-
-		local Outline = Instance.new("Frame")
-		Outline.Name = "Outline"
-		Outline.BackgroundColor3 = Color3.fromRGB(17,17,17)
-		Outline.BorderColor3 = Color3.fromRGB(0, 0, 0)
-		Outline.Position = UDim2.new(0, 0, 1, -16)
-		Outline.Size = UDim2.new(1, 0, 0, 16)
-
-		local Inline = Instance.new("Frame")
-		Inline.Name = "Inline"
-		Inline.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
-		Inline.BorderColor3 = Color3.fromRGB(0, 0, 0)
-		Inline.BorderSizePixel = 0
-		Inline.Position = UDim2.new(0, 1, 0, 1)
-		Inline.Size = UDim2.new(1, -2, 1, -2)
-
-		local Value = Instance.new("TextBox")
-		Value.Name = "Value"
-		Value.FontFace = Library.Fonts.Types.Smallest_Pixel
-		Value.Text = Textbox.State
-		Value.PlaceholderText = Textbox.Placeholder
-		Value.TextColor3 = Color3.fromRGB(255, 255, 255)
-		Value.PlaceholderColor3 = Color3.fromRGB(145,145,145)
-		Value.TextSize = Library.FSize
-		Value.TextStrokeTransparency = 0
-		Value.TextXAlignment = Enum.TextXAlignment.Left
-		Value.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-		Value.BackgroundTransparency = 1
-		Value.BorderColor3 = Color3.fromRGB(0, 0, 0)
-		Value.BorderSizePixel = 0
-		Value.Position = UDim2.new(0, 4, 0, 0)
-		Value.Size = UDim2.new(1, 0, 1, 0)
-		Value.Parent = Inline
-		Value.ClearTextOnFocus = false
-
-		Inline.Parent = Outline
-
-		Outline.Parent = NewBox
-
-		local Title = Instance.new("TextLabel")
-		Title.Name = "Title"
-		Title.FontFace = Library.Fonts.Types.Smallest_Pixel
-		Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-		Title.TextSize = Library.FSize
-		Title.TextStrokeTransparency = 0
-		Title.TextXAlignment = Enum.TextXAlignment.Left
-		Title.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-		Title.BackgroundTransparency = 1
-		Title.BorderColor3 = Color3.fromRGB(0, 0, 0)
-		Title.BorderSizePixel = 0
-		Title.Size = UDim2.new(1, 0, 0, 10)
-		Title.Parent = NewBox
-		Title.Text = Textbox.Name ~= nil and Textbox.Name or ""
-		Title.Visible = Textbox.Name ~= nil and true or false
-
-		-- // Connections
-		Value.FocusLost:Connect(function()
-			Textbox.Callback(Value.Text)
-			Library.Flags[Textbox.Flag] = Value.Text
-		end)
-		--
-		local function set(str)
-			Value.Text = str
-			Library.Flags[Textbox.Flag] = str
-			Textbox.Callback(str)
-		end
-
-		-- // Return
-		Flags[Textbox.Flag] = set
-		return Textbox
-	end
+    function Sections:Textbox(Properties)
+	local Properties = Properties or {}
+	local Textbox = {
+		Window = self.Window,
+		Page = self.Page,
+		Section = self,
+		Name = (Properties.Name or Properties.name or nil),
+		Placeholder = (
+			Properties.placeholder
+				or Properties.Placeholder
+				or Properties.holder
+				or Properties.Holder
+				or ""
+		),
+		State = (
+			Properties.state
+				or Properties.State
+				or Properties.def
+				or Properties.Def
+				or Properties.default
+				or Properties.Default
+				or ""
+		),
+		Callback = (
+			Properties.callback
+				or Properties.Callback
+				or Properties.callBack
+				or Properties.CallBack
+				or function() end
+		),
+		Flag = (
+			Properties.flag
+				or Properties.Flag
+				or Properties.pointer
+				or Properties.Pointer
+				or Library.NextFlag()
+		),
+	}
 	--
-	function Sections:Button(Properties)
-		local Properties = Properties or {}
-		local Button = {
-			Window = self.Window,
-			Page = self.Page,
-			Section = self,
-			Name = Properties.Name or "button",
-			Callback = (
-				Properties.callback
-					or Properties.Callback
-					or Properties.callBack
-					or Properties.CallBack
-					or function() end
-			),
-		}
-		--
-		local NewButton = Instance.new("Frame")
-		NewButton.Name = "NewButton"
-		NewButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-		NewButton.BackgroundTransparency = 1
-		NewButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
-		NewButton.BorderSizePixel = 0
-		NewButton.Size = UDim2.new(1, 0, 0, 16)
-		NewButton.Parent = Button.Section.Elements.SectionContent
+	local NewBox = Instance.new("TextButton")
+	NewBox.Name = "NewBox"
+	NewBox.FontFace = Library.Fonts.Types.Smallest_Pixel
+	NewBox.Text = ""
+	NewBox.TextColor3 = Color3.fromRGB(0, 0, 0)
+	NewBox.TextSize = Library.FSize
+	NewBox.AutoButtonColor = false
+	NewBox.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+	NewBox.BackgroundTransparency = 1
+	NewBox.BorderColor3 = Color3.fromRGB(0, 0, 0)
+	NewBox.BorderSizePixel = 0
+	NewBox.Size = UDim2.new(1, 0, 0, Textbox.Name ~= nil and 30 or 16)
+	NewBox.Parent = Textbox.Section.Elements.SectionContent
 
-		local Outline = Instance.new("Frame")
-		Outline.Name = "Outline"
-		Outline.BackgroundColor3 = Color3.fromRGB(17,17,17)
-		Outline.BorderColor3 = Color3.fromRGB(0, 0, 0)
-		Outline.Position = UDim2.new(0, 0, 1, -16)
-		Outline.Size = UDim2.new(1,0, 0, 16)
+	local Outline = Instance.new("Frame")
+	Outline.Name = "Outline"
+	Outline.BackgroundColor3 = Color3.fromRGB(17,17,17)
+	Outline.BorderColor3 = Color3.fromRGB(0, 0, 0)
+	Outline.Position = UDim2.new(0, 0, 1, -16)
+	Outline.Size = UDim2.new(1, 0, 0, 16)
 
-		local Inline = Instance.new("TextButton")
-		Inline.Name = "Inline"
-		Inline.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
-		Inline.BorderColor3 = Color3.fromRGB(0, 0, 0)
-		Inline.BorderSizePixel = 0
-		Inline.Position = UDim2.new(0, 1, 0, 1)
-		Inline.Size = UDim2.new(1, -2, 1, -2)
-		Inline.FontFace = Library.Fonts.Types.Smallest_Pixel
-		Inline.Text = ""
-		Inline.TextColor3 = Color3.fromRGB(0, 0, 0)
-		Inline.TextSize = Library.FSize
-		Inline.AutoButtonColor = false
+	local Inline = Instance.new("Frame")
+	Inline.Name = "Inline"
+	Inline.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+	Inline.BorderColor3 = Color3.fromRGB(0, 0, 0)
+	Inline.BorderSizePixel = 0
+	Inline.Position = UDim2.new(0, 1, 0, 1)
+	Inline.Size = UDim2.new(1, -2, 1, -2)
 
-		local Value = Instance.new("TextLabel")
-		Value.Name = "Value"
-		Value.FontFace = Library.Fonts.Types.Smallest_Pixel
-		Value.Text = Button.Name
-		Value.TextColor3 = Color3.fromRGB(255, 255, 255)
-		Value.TextSize = Library.FSize
-		Value.TextStrokeTransparency = 0
-		Value.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-		Value.BackgroundTransparency = 1
-		Value.BorderColor3 = Color3.fromRGB(0, 0, 0)
-		Value.BorderSizePixel = 0
-		Value.Size = UDim2.new(1, 0, 1, 0)
-		Value.Parent = Inline
+	local Value = Instance.new("TextBox")
+	Value.Name = "Value"
+	Value.FontFace = Library.Fonts.Types.Smallest_Pixel
+	Value.Text = Textbox.State
+	Value.PlaceholderText = Textbox.Placeholder
+	Value.TextColor3 = Color3.fromRGB(255, 255, 255)
+	Value.PlaceholderColor3 = Color3.fromRGB(145,145,145)
+	Value.TextSize = Library.FSize
+	Value.TextStrokeTransparency = 0
+	Value.TextXAlignment = Enum.TextXAlignment.Left
+	Value.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+	Value.BackgroundTransparency = 1
+	Value.BorderColor3 = Color3.fromRGB(0, 0, 0)
+	Value.BorderSizePixel = 0
+	Value.Position = UDim2.new(0, 4, 0, 0)
+	Value.Size = UDim2.new(1, 0, 1, 0)
+	Value.Parent = Inline
+	Value.ClearTextOnFocus = false
 
-		Inline.Parent = Outline
+	Inline.Parent = Outline
+	Outline.Parent = NewBox
 
-		Outline.Parent = NewButton
-		--
-		Library:Connection(Inline.MouseButton1Down, function()
-			Button.Callback()
-			Value.TextColor3 = Library.Accent
-			task.wait(0.1)
-			Value.TextColor3 = Color3.fromRGB(255,255,255)
-		end)
+	local Title = Instance.new("TextLabel")
+	Title.Name = "Title"
+	Title.FontFace = Library.Fonts.Types.Smallest_Pixel
+	Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+	Title.TextSize = Library.FSize
+	Title.TextStrokeTransparency = 0
+	Title.TextXAlignment = Enum.TextXAlignment.Left
+	Title.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+	Title.BackgroundTransparency = 1
+	Title.BorderColor3 = Color3.fromRGB(0, 0, 0)
+	Title.BorderSizePixel = 0
+	Title.Size = UDim2.new(1, 0, 0, 10)
+	Title.Parent = NewBox
+	Title.Text = Textbox.Name ~= nil and Textbox.Name or ""
+	Title.Visible = Textbox.Name ~= nil and true or false
 
-		function Button:Button(Properties)
-			local Properties = Properties or {}
-			local InButton = {
-				Window = self.Window,
-				Page = self.Page,
-				Section = self,
-				Name = Properties.Name or "button",
-				Callback = (
-					Properties.callback
-						or Properties.Callback
-						or Properties.callBack
-						or Properties.CallBack
-						or function() end
-				),
-			}
-			--
-			Outline.Size = UDim2.new(0.5, -4, 0, 16)
-			local iOutline = Instance.new("Frame")
-			iOutline.Name = "Outline"
-			iOutline.BackgroundColor3 = Color3.fromRGB(17,17,17)
-			iOutline.BorderColor3 = Color3.fromRGB(0, 0, 0)
-			iOutline.Position = UDim2.new(0.5, 4, 1, -16)
-			iOutline.Size = UDim2.new(0.5, -4, 0, 16)
-			iOutline.Parent = NewButton
+	Value.FocusLost:Connect(function()
+		Textbox.Callback(Value.Text)
+		Library.Flags[Textbox.Flag] = Value.Text
+	end)
 
-			local iInline = Instance.new("TextButton")
-			iInline.Name = "Inline"
-			iInline.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
-			iInline.BorderColor3 = Color3.fromRGB(0, 0, 0)
-			iInline.BorderSizePixel = 0
-			iInline.Position = UDim2.new(0, 1, 0, 1)
-			iInline.Size = UDim2.new(1, -2, 1, -2)
-			iInline.FontFace = Library.Fonts.Types.Smallest_Pixel
-			iInline.Text = ""
-			iInline.TextColor3 = Color3.fromRGB(0, 0, 0)
-			iInline.TextSize = Library.FSize
-			iInline.AutoButtonColor = false
-
-			local iValue = Instance.new("TextLabel")
-			iValue.Name = "Value"
-			iValue.FontFace = Library.Fonts.Types.Smallest_Pixel
-			iValue.Text = InButton.Name
-			iValue.TextColor3 = Color3.fromRGB(255, 255, 255)
-			iValue.TextSize = Library.FSize
-			iValue.TextStrokeTransparency = 0
-			iValue.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-			iValue.BackgroundTransparency = 1
-			iValue.BorderColor3 = Color3.fromRGB(0, 0, 0)
-			iValue.BorderSizePixel = 0
-			iValue.Size = UDim2.new(1, 0, 1, 0)
-			iValue.Parent = iInline
-
-			iInline.Parent = iOutline
-
-			--
-			Library:Connection(iInline.MouseButton1Down, function()
-				InButton.Callback()
-				iValue.TextColor3 = Library.Accent
-				task.wait(0.1)
-				iValue.TextColor3 = Color3.fromRGB(255,255,255)
-			end)
-		end
-
-		return Button
+	local function set(str)
+		Value.Text = str
+		Library.Flags[Textbox.Flag] = str
+		Textbox.Callback(str)
 	end
+
+	Flags[Textbox.Flag] = set
+	return Textbox
+end
+
+function Sections:Button(Properties)
+	local Properties = Properties or {}
+	local Button = {
+		Window = self.Window,
+		Page = self.Page,
+		Section = self,
+		Name = Properties.Name or "button",
+		Callback = (
+			Properties.callback
+				or Properties.Callback
+				or Properties.callBack
+				or Properties.CallBack
+				or function() end
+		),
+	}
 	--
-	function Sections:Divider(Properties)
-		local Properties = Properties or {}
-		local Divider = {
-			Window = self.Window,
-			Page = self.Page,
-			Section = self,
-			Name = Properties.Name or "divider",
-		}
-		--
-		local NewDivider = Instance.new("TextButton")
-		NewDivider.Name = "NewDivider"
-		NewDivider.FontFace = Library.Fonts.Types.Smallest_Pixel
-		NewDivider.Text = ""
-		NewDivider.TextColor3 = Color3.fromRGB(0, 0, 0)
-		NewDivider.TextSize = Library.FSize
-		NewDivider.AutoButtonColor = false
-		NewDivider.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-		NewDivider.BackgroundTransparency = 1
-		NewDivider.BorderColor3 = Color3.fromRGB(0, 0, 0)
-		NewDivider.BorderSizePixel = 0
-		NewDivider.Size = UDim2.new(1, 0, 0, 8)
-		NewDivider.Parent = Divider.Section.Elements.SectionContent
+	local NewButton = Instance.new("Frame")
+	NewButton.Name = "NewButton"
+	NewButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+	NewButton.BackgroundTransparency = 1
+	NewButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
+	NewButton.BorderSizePixel = 0
+	NewButton.Size = UDim2.new(1, 0, 0, 16)
+	NewButton.Parent = Button.Section.Elements.SectionContent
 
-		local Outline = Instance.new("Frame")
-		Outline.Name = "Outline"
-		Outline.AnchorPoint = Vector2.new(0, 0.5)
-		Outline.BackgroundColor3 = Color3.fromRGB(17,17,17)
-		Outline.BorderColor3 = Color3.fromRGB(0, 0, 0)
-		Outline.Position = UDim2.new(0, 0, 0.5, 0)
-		Outline.Size = UDim2.new(1, 0, 0, 4)
+	local Outline = Instance.new("Frame")
+	Outline.Name = "Outline"
+	Outline.BackgroundColor3 = Color3.fromRGB(17,17,17)
+	Outline.BorderColor3 = Color3.fromRGB(0, 0, 0)
+	Outline.Position = UDim2.new(0, 0, 1, -16)
+	Outline.Size = UDim2.new(1,0, 0, 16)
 
-		local Inline = Instance.new("Frame")
-		Inline.Name = "Inline"
-		Inline.BackgroundColor3 = Color3.fromRGB(5, 5, 5)
-		Inline.BorderColor3 = Color3.fromRGB(0, 0, 0)
-		Inline.BorderSizePixel = 0
-		Inline.Position = UDim2.new(0, 1, 0, 1)
-		Inline.Size = UDim2.new(1, -2, 1, -2)
+	local Inline = Instance.new("TextButton")
+	Inline.Name = "Inline"
+	Inline.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+	Inline.BorderColor3 = Color3.fromRGB(0, 0, 0)
+	Inline.BorderSizePixel = 0
+	Inline.Position = UDim2.new(0, 1, 0, 1)
+	Inline.Size = UDim2.new(1, -2, 1, -2)
+	Inline.FontFace = Library.Fonts.Types.Smallest_Pixel
+	Inline.Text = ""
+	Inline.TextColor3 = Color3.fromRGB(0, 0, 0)
+	Inline.TextSize = Library.FSize
+	Inline.AutoButtonColor = false
 
-		local Value = Instance.new("TextLabel")
-		Value.Name = "Value"
-		Value.FontFace = Library.Fonts.Types.Smallest_Pixel
-		Value.Text = Divider.Name
-		Value.TextColor3 = Color3.fromRGB(255, 255, 255)
-		Value.TextSize = Library.FSize
-		Value.TextStrokeTransparency = 0
-		Value.AnchorPoint = Vector2.new(0.5, 0.5)
-		Value.AutomaticSize = Enum.AutomaticSize.X
-		Value.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-		Value.BorderColor3 = Color3.fromRGB(0, 0, 0)
-		Value.BorderSizePixel = 0
-		Value.Position = UDim2.new(0.5, 0, 0.5, 0)
-		Value.Size = UDim2.new(0, 0, 0, 8)
+	local Value = Instance.new("TextLabel")
+	Value.Name = "Value"
+	Value.FontFace = Library.Fonts.Types.Smallest_Pixel
+	Value.Text = Button.Name
+	Value.TextColor3 = Color3.fromRGB(255, 255, 255)
+	Value.TextSize = Library.FSize
+	Value.TextStrokeTransparency = 0
+	Value.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+	Value.BackgroundTransparency = 1
+	Value.BorderColor3 = Color3.fromRGB(0, 0, 0)
+	Value.BorderSizePixel = 0
+	Value.Size = UDim2.new(1, 0, 1, 0)
+	Value.Parent = Inline
 
-		local UIPadding = Instance.new("UIPadding")
-		UIPadding.Name = "UIPadding"
-		UIPadding.PaddingLeft = UDim.new(0, 5)
-		UIPadding.PaddingRight = UDim.new(0, 5)
-		UIPadding.Parent = Value
+	Inline.Parent = Outline
+	Outline.Parent = NewButton
 
-		Value.Parent = Inline
-
-		Inline.Parent = Outline
-
-		Outline.Parent = NewDivider
-		
-		return Divider
-	end
-	--
-	function Sections:Label(Properties)
-		local Properties = Properties or {}
-		local Label = {
-			Window = self.Window,
-			Page = self.Page,
-			Section = self,
-			Name = Properties.Name or "button",
-		}
-		--
-		local NewButton = Instance.new("TextButton")
-		NewButton.Name = "NewButton"
-		NewButton.FontFace = Library.Fonts.Types.Smallest_Pixel
-		NewButton.Text = ""
-		NewButton.TextColor3 = Color3.fromRGB(0, 0, 0)
-		NewButton.TextSize = Library.FSize
-		NewButton.AutoButtonColor = false
-		NewButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-		NewButton.BackgroundTransparency = 1
-		NewButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
-		NewButton.BorderSizePixel = 0
-		NewButton.Size = UDim2.new(1, 0, 0, 8)
-		NewButton.Parent = Label.Section.Elements.SectionContent
-
-		local Value = Instance.new("TextLabel")
-		Value.Name = "Value"
-		Value.FontFace = Library.Fonts.Types.Smallest_Pixel
-		Value.Text = Label.Name
-		Value.TextXAlignment = Enum.TextXAlignment.Left
+	Library:Connection(Inline.MouseButton1Down, function()
+		Button.Callback()
+		Value.TextColor3 = Library.Accent
+		task.wait(0.1)
 		Value.TextColor3 = Color3.fromRGB(255,255,255)
-		Value.TextSize = Library.FSize
-		Value.TextStrokeTransparency = 0
-		Value.TextWrapped = true
-		Value.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-		Value.BackgroundTransparency = 1
-		Value.BorderColor3 = Color3.fromRGB(0, 0, 0)
-		Value.BorderSizePixel = 0
-		Value.Size = UDim2.new(1, 0, 1, 0)
-		Value.Parent = NewButton
+	end)
 
-		return Label
+	function Button:Button(Properties)
+		local Properties = Properties or {}
+		local InButton = {
+			Window = self.Window,
+			Page = self.Page,
+			Section = self,
+			Name = Properties.Name or "button",
+			Callback = (
+				Properties.callback
+					or Properties.Callback
+					or Properties.callBack
+					or Properties.CallBack
+					or function() end
+			),
+		}
+		--
+		Outline.Size = UDim2.new(0.5, -4, 0, 16)
+		local iOutline = Instance.new("Frame")
+		iOutline.Name = "Outline"
+		iOutline.BackgroundColor3 = Color3.fromRGB(17,17,17)
+		iOutline.BorderColor3 = Color3.fromRGB(0, 0, 0)
+		iOutline.Position = UDim2.new(0.5, 4, 1, -16)
+		iOutline.Size = UDim2.new(0.5, -4, 0, 16)
+		iOutline.Parent = NewButton
+
+		local iInline = Instance.new("TextButton")
+		iInline.Name = "Inline"
+		iInline.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+		iInline.BorderColor3 = Color3.fromRGB(0, 0, 0)
+		iInline.BorderSizePixel = 0
+		iInline.Position = UDim2.new(0, 1, 0, 1)
+		iInline.Size = UDim2.new(1, -2, 1, -2)
+		iInline.FontFace = Library.Fonts.Types.Smallest_Pixel
+		iInline.Text = ""
+		iInline.TextColor3 = Color3.fromRGB(0, 0, 0)
+		iInline.TextSize = Library.FSize
+		iInline.AutoButtonColor = false
+
+		local iValue = Instance.new("TextLabel")
+		iValue.Name = "Value"
+		iValue.FontFace = Library.Fonts.Types.Smallest_Pixel
+		iValue.Text = InButton.Name
+		iValue.TextColor3 = Color3.fromRGB(255, 255, 255)
+		iValue.TextSize = Library.FSize
+		iValue.TextStrokeTransparency = 0
+		iValue.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+		iValue.BackgroundTransparency = 1
+		iValue.BorderColor3 = Color3.fromRGB(0, 0, 0)
+		iValue.BorderSizePixel = 0
+		iValue.Size = UDim2.new(1, 0, 1, 0)
+		iValue.Parent = iInline
+
+		iInline.Parent = iOutline
+
+		Library:Connection(iInline.MouseButton1Down, function()
+			InButton.Callback()
+			iValue.TextColor3 = Library.Accent
+			task.wait(0.1)
+			iValue.TextColor3 = Color3.fromRGB(255,255,255)
+		end)
 	end
+
+	return Button
+end
+
+function Sections:Divider(Properties)
+	local Properties = Properties or {}
+	local Divider = {
+		Window = self.Window,
+		Page = self.Page,
+		Section = self,
+		Name = Properties.Name or "divider",
+	}
 	--
-	function Library:Indicator(Properties)
-		local Indicator = {
-			Title = Properties.Name or Properties.name or "New Indicator";
-			Elements = {};
-			Dragging = { false, UDim2.new(0, 0, 0, 0) };
-		};
-		--
-		local Outline = Instance.new("TextButton")
-		Outline.Name = "Outline"
-		Outline.AutomaticSize = Enum.AutomaticSize.Y
-		Outline.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-		Outline.BorderColor3 = Color3.fromRGB(0, 0, 0)
-		Outline.Position = UDim2.new(0,100,0.5,0)
-		Outline.Size = UDim2.new(0, 150, 0, 15)
-		Outline.AnchorPoint = Vector2.new(0.5,0.5)
-		Outline.Parent = Library.ScreenGUI
-		Outline.Visible = false
-		Outline.Text = ""
-		Outline.AutoButtonColor = false
+	local NewDivider = Instance.new("TextButton")
+	NewDivider.Name = "NewDivider"
+	NewDivider.FontFace = Library.Fonts.Types.Smallest_Pixel
+	NewDivider.Text = ""
+	NewDivider.TextColor3 = Color3.fromRGB(0, 0, 0)
+	NewDivider.TextSize = Library.FSize
+	NewDivider.AutoButtonColor = false
+	NewDivider.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+	NewDivider.BackgroundTransparency = 1
+	NewDivider.BorderColor3 = Color3.fromRGB(0, 0, 0)
+	NewDivider.BorderSizePixel = 0
+	NewDivider.Size = UDim2.new(1, 0, 0, 8)
+	NewDivider.Parent = Divider.Section.Elements.SectionContent
 
-		local Inline = Instance.new("Frame")
-		Inline.Name = "Inline"
-		Inline.BackgroundColor3 = Color3.fromRGB(8, 8, 8)
-		Inline.BorderColor3 = Color3.fromRGB(0, 0, 0)
-		Inline.BorderSizePixel = 0
-		Inline.Position = UDim2.new(0, 1, 0, 1)
-		Inline.Size = UDim2.new(1, -2, 1, -2)
-		Inline.Parent = Outline
+	local Outline = Instance.new("Frame")
+	Outline.Name = "Outline"
+	Outline.AnchorPoint = Vector2.new(0, 0.5)
+	Outline.BackgroundColor3 = Color3.fromRGB(17,17,17)
+	Outline.BorderColor3 = Color3.fromRGB(0, 0, 0)
+	Outline.Position = UDim2.new(0, 0, 0.5, 0)
+	Outline.Size = UDim2.new(1, 0, 0, 4)
 
-		local Value = Instance.new("TextLabel")
-		Value.Name = "Value"
-		Value.FontFace = Library.Fonts.Types.Smallest_Pixel
-		Value.Text = Indicator.Title
-		Value.TextColor3 = Color3.fromRGB(255, 255, 255)
-		Value.TextSize = Library.FSize
-		Value.TextStrokeTransparency = 0
-		Value.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-		Value.BackgroundTransparency = 1
-		Value.BorderColor3 = Color3.fromRGB(0, 0, 0)
-		Value.BorderSizePixel = 0
-		Value.Position = UDim2.new(0, 0, 0, -1)
-		Value.Size = UDim2.new(1, 0, 0, 15)
-		Value.Parent = Inline
+	local Inline = Instance.new("Frame")
+	Inline.Name = "Inline"
+	Inline.BackgroundColor3 = Color3.fromRGB(5, 5, 5)
+	Inline.BorderColor3 = Color3.fromRGB(0, 0, 0)
+	Inline.BorderSizePixel = 0
+	Inline.Position = UDim2.new(0, 1, 0, 1)
+	Inline.Size = UDim2.new(1, -2, 1, -2)
 
-		local HolderInline = Instance.new("Frame")
-		HolderInline.Name = "HolderInline"
-		HolderInline.BackgroundColor3 = Color3.fromRGB(8, 8, 8)
-		HolderInline.BorderColor3 = Color3.fromRGB(0, 0, 0)
-		HolderInline.BorderSizePixel = 0
-		HolderInline.Position = UDim2.new(0, 1, 0, 1)
-		HolderInline.Size = UDim2.new(1, -2, 1, -2)
+	local Value = Instance.new("TextLabel")
+	Value.Name = "Value"
+	Value.FontFace = Library.Fonts.Types.Smallest_Pixel
+	Value.Text = Divider.Name
+	Value.TextColor3 = Color3.fromRGB(255, 255, 255)
+	Value.TextSize = Library.FSize
+	Value.TextStrokeTransparency = 0
+	Value.AnchorPoint = Vector2.new(0.5, 0.5)
+	Value.AutomaticSize = Enum.AutomaticSize.X
+	Value.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+	Value.BorderColor3 = Color3.fromRGB(0, 0, 0)
+	Value.BorderSizePixel = 0
+	Value.Position = UDim2.new(0.5, 0, 0.5, 0)
+	Value.Size = UDim2.new(0, 0, 0, 8)
 
-		local Accent = Library:NewInstance("Frame", true)
-		Accent.Name = "Accent"
-		Accent.BackgroundColor3 = Library.Accent
-		Accent.BorderColor3 = Color3.fromRGB(0, 0, 0)
-		Accent.BorderSizePixel = 0
-		Accent.Size = UDim2.new(1, 0, 0, 1)
-		Accent.Parent = Outline
-		
-		-- // Dragging
-		Library:Connection(Outline.MouseButton1Down, function()
+	local UIPadding = Instance.new("UIPadding")
+	UIPadding.Name = "UIPadding"
+	UIPadding.PaddingLeft = UDim.new(0, 5)
+	UIPadding.PaddingRight = UDim.new(0, 5)
+	UIPadding.Parent = Value
+
+	Value.Parent = Inline
+	Inline.Parent = Outline
+	Outline.Parent = NewDivider
+	
+	return Divider
+end
+
+function Sections:Label(Properties)
+	local Properties = Properties or {}
+	local Label = {
+		Window = self.Window,
+		Page = self.Page,
+		Section = self,
+		Name = Properties.Name or "label",
+	}
+	--
+	local NewButton = Instance.new("TextButton")
+	NewButton.Name = "NewButton"
+	NewButton.FontFace = Library.Fonts.Types.Smallest_Pixel
+	NewButton.Text = ""
+	NewButton.TextColor3 = Color3.fromRGB(0, 0, 0)
+	NewButton.TextSize = Library.FSize
+	NewButton.AutoButtonColor = false
+	NewButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+	NewButton.BackgroundTransparency = 1
+	NewButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
+	NewButton.BorderSizePixel = 0
+	NewButton.Size = UDim2.new(1, 0, 0, 8)
+	NewButton.Parent = Label.Section.Elements.SectionContent
+
+	local Value = Instance.new("TextLabel")
+	Value.Name = "Value"
+	Value.FontFace = Library.Fonts.Types.Smallest_Pixel
+	Value.Text = Label.Name
+	Value.TextXAlignment = Enum.TextXAlignment.Left
+	Value.TextColor3 = Color3.fromRGB(255,255,255)
+	Value.TextSize = Library.FSize
+	Value.TextStrokeTransparency = 0
+	Value.TextWrapped = true
+	Value.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+	Value.BackgroundTransparency = 1
+	Value.BorderColor3 = Color3.fromRGB(0, 0, 0)
+	Value.BorderSizePixel = 0
+	Value.Size = UDim2.new(1, 0, 1, 0)
+	Value.Parent = NewButton
+
+	return Label
+end
+
+function Library:Indicator(Properties)
+	local Indicator = {
+		Title = Properties.Name or Properties.name or "New Indicator";
+		Elements = {};
+		Dragging = { false, UDim2.new(0, 0, 0, 0) };
+	};
+	--
+	local Outline = Instance.new("TextButton")
+	Outline.Name = "Outline"
+	Outline.AutomaticSize = Enum.AutomaticSize.Y
+	Outline.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+	Outline.BorderColor3 = Color3.fromRGB(0, 0, 0)
+	Outline.Position = UDim2.new(0,100,0.5,0)
+	Outline.Size = UDim2.new(0, 150, 0, 15)
+	Outline.AnchorPoint = Vector2.new(0.5,0.5)
+	Outline.Parent = Library.ScreenGUI
+	Outline.Visible = false
+	Outline.Text = ""
+	Outline.AutoButtonColor = false
+
+	local Inline = Instance.new("Frame")
+	Inline.Name = "Inline"
+	Inline.BackgroundColor3 = Color3.fromRGB(8, 8, 8)
+	Inline.BorderColor3 = Color3.fromRGB(0, 0, 0)
+	Inline.BorderSizePixel = 0
+	Inline.Position = UDim2.new(0, 1, 0, 1)
+	Inline.Size = UDim2.new(1, -2, 1, -2)
+	Inline.Parent = Outline
+
+	local Value = Instance.new("TextLabel")
+	Value.Name = "Value"
+	Value.FontFace = Library.Fonts.Types.Smallest_Pixel
+	Value.Text = Indicator.Title
+	Value.TextColor3 = Color3.fromRGB(255, 255, 255)
+	Value.TextSize = Library.FSize
+	Value.TextStrokeTransparency = 0
+	Value.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+	Value.BackgroundTransparency = 1
+	Value.BorderColor3 = Color3.fromRGB(0, 0, 0)
+	Value.BorderSizePixel = 0
+	Value.Position = UDim2.new(0, 0, 0, -1)
+	Value.Size = UDim2.new(1, 0, 0, 15)
+	Value.Parent = Inline
+
+	local HolderInline = Instance.new("Frame")
+	HolderInline.Name = "HolderInline"
+	HolderInline.BackgroundColor3 = Color3.fromRGB(8, 8, 8)
+	HolderInline.BorderColor3 = Color3.fromRGB(0, 0, 0)
+	HolderInline.BorderSizePixel = 0
+	HolderInline.Position = UDim2.new(0, 1, 0, 1)
+	HolderInline.Size = UDim2.new(1, -2, 1, -2)
+
+	local Accent = Library:NewInstance("Frame", true)
+	Accent.Name = "Accent"
+	Accent.BackgroundColor3 = Library.Accent
+	Accent.BorderColor3 = Color3.fromRGB(0, 0, 0)
+	Accent.BorderSizePixel = 0
+	Accent.Size = UDim2.new(1, 0, 0, 1)
+	Accent.Parent = Outline
+	
+	-- // Dragging
+	Library:Connection(Outline.MouseButton1Down, function()
+		local Location = game:GetService("UserInputService"):GetMouseLocation()
+		Indicator.Dragging[1] = true
+		Indicator.Dragging[2] = UDim2.new(0, Location.X - Outline.AbsolutePosition.X, 0, Location.Y - Outline.AbsolutePosition.Y)
+	end)
+	Library:Connection(game:GetService("UserInputService").InputEnded, function(Input)
+		if Input.UserInputType == Enum.UserInputType.MouseButton1 and Indicator.Dragging[1] then
 			local Location = game:GetService("UserInputService"):GetMouseLocation()
-			Indicator.Dragging[1] = true
-			Indicator.Dragging[2] = UDim2.new(0, Location.X - Outline.AbsolutePosition.X, 0, Location.Y - Outline.AbsolutePosition.Y)
-		end)
-		Library:Connection(game:GetService("UserInputService").InputEnded, function(Input)
-			if Input.UserInputType == Enum.UserInputType.MouseButton1 and Indicator.Dragging[1] then
-				local Location = game:GetService("UserInputService"):GetMouseLocation()
-				Indicator.Dragging[1] = false
-				Indicator.Dragging[2] = UDim2.new(0, 0, 0, 0)
-			end
-		end)
-		Library:Connection(game:GetService("UserInputService").InputChanged, function(Input)
-			local Location = game:GetService("UserInputService"):GetMouseLocation()
-			-- Dragging
-			if Indicator.Dragging[1] then
-				Outline.Position = UDim2.new(0, Location.X - Indicator.Dragging[2].X.Offset + (Outline.Size.X.Offset * Outline.AnchorPoint.X), 0, Location.Y - Indicator.Dragging[2].Y.Offset + (Outline.Size.Y.Offset * Outline.AnchorPoint.Y))
-			end
-		end)
-		--
-		function Indicator:SetVisible(State)
-			Outline.Visible = State
+			Indicator.Dragging[1] = false
+			Indicator.Dragging[2] = UDim2.new(0, 0, 0, 0)
 		end
-		return Indicator;
+	end)
+	Library:Connection(game:GetService("UserInputService").InputChanged, function(Input)
+		local Location = game:GetService("UserInputService"):GetMouseLocation()
+		if Indicator.Dragging[1] then
+			Outline.Position = UDim2.new(0, Location.X - Indicator.Dragging[2].X.Offset + (Outline.Size.X.Offset * Outline.AnchorPoint.X), 0, Location.Y - Indicator.Dragging[2].Y.Offset + (Outline.Size.Y.Offset * Outline.AnchorPoint.Y))
+		end
+	end)
+	
+	function Indicator:SetVisible(State)
+		Outline.Visible = State
 	end
-end;
+	return Indicator;
+end
+
 return Library
